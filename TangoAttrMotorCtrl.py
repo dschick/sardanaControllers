@@ -10,6 +10,7 @@ import math
 import time
 
 TANGO_ATTR = 'TangoAttribute'
+TANGO_IS_MOVING = 'TangoIsMoving'
 FORMULA_READ = 'FormulaRead'
 FORMULA_WRITE = 'FormulaWrite'
 TANGO_ATTR_ENC = 'TangoAttributeEncoder'
@@ -65,6 +66,12 @@ class TangoAttrMotorController(MotorController):
                 ' (e.g. my/tango/dev/attr)',
             Access: DataAccess.ReadWrite
         },
+        TANGO_IS_MOVING: {
+            Type: str,
+            Description: 'The Tango Attribute indicating a movement'\
+                ' (e.g. my/tango/dev/is_moving)',
+            Access: DataAccess.ReadWrite
+        },
         FORMULA_READ: {
             Type: str,
             Description: 'The Formula to get the desired position from'\
@@ -103,6 +110,7 @@ class TangoAttrMotorController(MotorController):
     def AddDevice(self, axis):
         self.axisAttributes[axis] = {}
         self.axisAttributes[axis][TAU_ATTR] = None
+        self.axisAttributes[axis][TANGO_IS_MOVING] = None
         self.axisAttributes[axis][FORMULA_READ] = 'VALUE'
         self.axisAttributes[axis][FORMULA_WRITE] = 'VALUE'
         self.axisAttributes[axis][TAU_ATTR_ENC] = None
@@ -120,12 +128,15 @@ class TangoAttrMotorController(MotorController):
             status = 'ok'
             switch_state = 0
             tau_attr = self.axisAttributes[axis][TAU_ATTR]
+            #tau_is_moving = self.axisAttributes[axis][TANGO_IS_MOVING]
             if tau_attr is None:
                 return (State.Alarm, "attribute proxy is None", 0)
 
             if tau_attr.read().quality == AttrQuality.ATTR_CHANGING:
                 state = State.Moving
-
+            #elif tau_is_moving.read().value:                
+            #    state = State.Moving
+            #    print("hallo")
             elif self.axisAttributes[axis][MOVE_TIMEOUT] != None:
                 tau_attr_enc = self.axisAttributes[axis][TAU_ATTR_ENC]
                 enc_threshold = self.axisAttributes[
