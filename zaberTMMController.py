@@ -35,13 +35,6 @@ class ZaberTMMController(MotorController):
     ctrl_properties = {'port': {Type: str,
                                 Description: 'The port of the rs232 device',
                                 DefaultValue: '/dev/ttyZaber'}}
-    axis_attributes = {
-    "Homing" : {
-            Type         : bool,
-            Description  : "(de)activates the motor homing algorithm",
-            DefaultValue : False,
-        },
-    }
     
     MaxDevice = 2
     
@@ -60,8 +53,8 @@ class ZaberTMMController(MotorController):
     def AddDevice(self, axis):
         self._motors[axis] = True
         # change setting of devices, because they are non-volatile
-        # disable auto-reply 1*2^0
-        # enable backlash correction 1*2^1
+        # disable auto-reply 1*2^0 = 1
+        # enable backlash correction 1*2^1 = 2
         command_number = 40 # set device mode
         command = BinaryCommand(axis, command_number, 3)
         self.con.write(command)
@@ -103,7 +96,7 @@ class ZaberTMMController(MotorController):
         while (reply.command_number != command_number) & (reply.device_number != axis):
             self.con.write(command)
             reply = self.con.read()
-            time.sleep(0.2)
+            time.sleep(0.05)
         
         return int(reply.data)
         
@@ -122,13 +115,43 @@ class ZaberTMMController(MotorController):
         command = BinaryCommand(axis, command_number)
         self.con.write(command)
 
-    def setHoming(self, axis, value):
-        """Homing for given axis"""
-        if value:       
-            command_number = 1 # homing
-            command = BinaryCommand(axis, command_number)
-            self.con.write(command)
-    
-    def getHoming(self, axis):
-        """Homing for given axis"""       
-        return False
+    def SendToCtrl(self, cmd):
+        """
+        Send custom native commands. The cmd is a space separated string
+        containing the command information. Parsing this string one gets
+        the command name and the following are the arguments for the given
+        command i.e.command_name, [arg1, arg2...]
+
+        :param cmd: string
+        :return: string (MANDATORY to avoid OMNI ORB exception)
+        """
+        # Get the process to send
+        mode = cmd.split(' ')[0].lower()
+        args = cmd.strip().split(' ')[1:]
+
+        if mode == 'homing':
+            try:
+                if len(args) == 1:
+                    axis = args[0]
+                    axis = int(axis)
+                else:
+                    raise ValueError('Invalid number of arguments')
+            except Exception as e:
+                self._log.error(e)
+                
+            self._log.info('Starting homing for Zaber mirror')
+            
+            try:
+                command_number = 1 # homing
+                command = BinaryCommand(axis, command_number)
+                self.con.write(command)
+            except Exception as e:
+                self._log.error(e)
+                print(e)
+                return 'Error'
+
+            self._log.info('Homing was finished')
+            return "[DONE]"
+        else:
+            self._log.warning('Invalid command')
+            return 'ERROR: Invalid command requested.'
