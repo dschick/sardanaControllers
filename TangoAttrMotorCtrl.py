@@ -19,6 +19,7 @@ TANGO_ATTR_ENC_SPEED = 'TangoAttributeEncoderSpeed'
 
 TAU_ATTR = 'TauAttribute'
 TAU_ATTR_ENC = 'TauAttributeEnc'
+TAU_IS_MOVING = 'TauIsMoving'
 MOVE_TO = 'MoveTo'
 MOVE_TIMEOUT = 'MoveTimeout'
 
@@ -110,7 +111,7 @@ class TangoAttrMotorController(MotorController):
     def AddDevice(self, axis):
         self.axisAttributes[axis] = {}
         self.axisAttributes[axis][TAU_ATTR] = None
-        self.axisAttributes[axis][TANGO_IS_MOVING] = None
+        self.axisAttributes[axis][TAU_IS_MOVING] = None
         self.axisAttributes[axis][FORMULA_READ] = 'VALUE'
         self.axisAttributes[axis][FORMULA_WRITE] = 'VALUE'
         self.axisAttributes[axis][TAU_ATTR_ENC] = None
@@ -128,15 +129,15 @@ class TangoAttrMotorController(MotorController):
             status = 'ok'
             switch_state = 0
             tau_attr = self.axisAttributes[axis][TAU_ATTR]
-            #tau_is_moving = self.axisAttributes[axis][TANGO_IS_MOVING]
+            tau_is_moving = self.axisAttributes[axis][TAU_IS_MOVING]
             if tau_attr is None:
                 return (State.Alarm, "attribute proxy is None", 0)
 
             if tau_attr.read().quality == AttrQuality.ATTR_CHANGING:
                 state = State.Moving
-            #elif tau_is_moving.read().value:                
-            #    state = State.Moving
-            #    print("hallo")
+            elif tau_is_moving:
+                if tau_is_moving.read().value:
+                    state = State.Moving
             elif self.axisAttributes[axis][MOVE_TIMEOUT] != None:
                 tau_attr_enc = self.axisAttributes[axis][TAU_ATTR_ENC]
                 enc_threshold = self.axisAttributes[
@@ -252,10 +253,12 @@ class TangoAttrMotorController(MotorController):
             self._log.debug(
                 "SetExtraAttributePar [%d] %s = %s" % (axis, name, value))
             self.axisAttributes[axis][name] = value
-            if name in [TANGO_ATTR, TANGO_ATTR_ENC]:
+            if name in [TANGO_ATTR, TANGO_ATTR_ENC, TANGO_IS_MOVING]:
                 key = TAU_ATTR
                 if name == TANGO_ATTR_ENC:
                     key = TAU_ATTR_ENC
+                elif name == TANGO_IS_MOVING:
+                    key = TAU_IS_MOVING
                 try:
                     self.axisAttributes[axis][key] = AttributeProxy(value)
                 except Exception, e:
