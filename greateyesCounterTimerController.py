@@ -27,7 +27,6 @@ import socket
 import struct
 import json
 import numpy as np
-import time
 
 class greatEyes:
     def __init__(self, ip, port):
@@ -109,10 +108,13 @@ class greateyesCounterTimerController(CounterTimerController):
         
     def ReadOne(self, axis):
         """Get the specified counter value"""
+        
         if axis == 0:
             peaks = json.loads(self.ge.writeRead(b'GET_PEAKS'))
-            self.data = np.array(peaks).flatten()#np.array(json.loads(self.ge.writeRead(b'GET_PEAKS')))   
-                 
+            self.data = np.array(peaks, dtype=float).flatten()
+            rel = self.data[0:10]/self.data[10:20]
+            self.data = np.append(self.data, rel)
+            print(self.data)
          
         return self.data[axis]
 
