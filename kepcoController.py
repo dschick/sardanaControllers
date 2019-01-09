@@ -32,6 +32,7 @@ from sardana.pool.controller import Type, Description, DefaultValue
 
 
 class kepcoController(MotorController):
+    
     ctrl_properties = {'resource': {Type: str, Description: 'GPIB resource', DefaultValue: 'GPIB0::6::INSTR'}}
     
     MaxDevice = 1
@@ -42,13 +43,12 @@ class kepcoController(MotorController):
 
         self.rm = visa.ResourceManager('@py')
         self.inst = self.rm.open_resource(self.resource)
-        print 'Kepco Initialization'
+        print 'Kepco Initialization: ',
         idn = self.inst.query('*IDN?')
         if idn:
-            print idn
-            print 'Kepco is initialized!'
+            print idn,
         else:
-            print 'Kepco is NOT initialized!'
+            print 'NOT initialized!'
         # initialize hardware communication        
         self._motors = {}
         self._isMoving = None
