@@ -47,11 +47,11 @@ class keithley6430ZeroDController(ZeroDController):
             print 'NOT initialized!'
 
         # settings
-        self.inst.write('*RST')
+        #self.inst.write('*RST')
         self.inst.write('REN')
         self.inst.write(':INIT')
-        self.inst.write(':SENS:FUNC "CURR"')
-        self.inst.write(':CURR:RANGE:AUTO ON')
+        #self.inst.write(':SENS:FUNC "CURR"')
+        #self.inst.write(':CURR:RANGE:AUTO ON')
         self.inst.write(':OUTP ON')
 
     def AddDevice(self, ind):
@@ -64,5 +64,6 @@ class keithley6430ZeroDController(ZeroDController):
         return State.On, "OK"
 
     def ReadOne(self, ind):
-        res = self.inst.query(':READ?')        
+        res = self.inst.query(':READ?')   
+        #print(res)
         return float(res.encode('utf8').split(',')[1])

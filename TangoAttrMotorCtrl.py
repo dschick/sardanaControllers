@@ -191,8 +191,10 @@ class TangoAttrMotorController(MotorController):
                 
             if limit_plus:
                 switch_state |= MotorController.UpperLimitSwitch
+                state = State.Alarm
             elif limit_minus:
                 switch_state |= MotorController.LowerLimitSwitch
+                state = State.Alarm
                 
             return (state, status, switch_state)
         except Exception, e:

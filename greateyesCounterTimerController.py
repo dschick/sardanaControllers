@@ -114,7 +114,6 @@ class greateyesCounterTimerController(CounterTimerController):
             self.data = np.array(peaks, dtype=float).flatten()
             rel = self.data[0:10]/self.data[10:20]
             self.data = np.append(self.data, rel)
-            print(self.data)
          
         return self.data[axis]
 
