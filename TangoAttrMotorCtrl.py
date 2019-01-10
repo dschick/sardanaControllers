@@ -1,3 +1,30 @@
+
+Skip to content
+
+    Pull requests
+    Issues
+    Marketplace
+    Explore
+
+    @dschick
+
+1
+0
+
+    1
+
+dschick/sardanaControllers
+Code
+Issues 0
+Pull requests 0
+Projects 0
+Wiki
+Insights
+Settings
+sardanaControllers/TangoAttrMotorCtrl.py
+d06067d a day ago
+@dschick dschick add limits to Tango Motor Controller
+315 lines (272 sloc) 11.3 KB
 from PyTango import AttrQuality
 from PyTango import AttributeProxy
 from PyTango import DevFailed
@@ -10,6 +37,9 @@ import math
 import time
 
 TANGO_ATTR = 'TangoAttribute'
+TANGO_IS_MOVING = 'TangoIsMoving'
+TANGO_LIMIT_PLUS = 'TangoLimitPlus'
+TANGO_LIMIT_MINUS = 'TangoLimitMinus'
 FORMULA_READ = 'FormulaRead'
 FORMULA_WRITE = 'FormulaWrite'
 TANGO_ATTR_ENC = 'TangoAttributeEncoder'
@@ -18,20 +48,21 @@ TANGO_ATTR_ENC_SPEED = 'TangoAttributeEncoderSpeed'
 
 TAU_ATTR = 'TauAttribute'
 TAU_ATTR_ENC = 'TauAttributeEnc'
+TAU_IS_MOVING = 'TauIsMoving'
+TAU_LIMIT_PLUS = 'TauLimitPlus'
+TAU_LIMIT_MINUS = 'TauLimitMinus'
 MOVE_TO = 'MoveTo'
 MOVE_TIMEOUT = 'MoveTimeout'
 
 
 class TangoAttrMotorController(MotorController):
     """This controller offers as many motors as the user wants.
-
     Each motor has three _MUST_HAVE_ extra attributes:
     +) TangoAttribute - Tango attribute used to simulate the motor's position
         (moving the motor writes this attribute)
     +) FormulaRead - Formula evaluate using 'VALUE' as the Tango read attribute
         value
     +) FormulaWrite - Formula to evaluate using 'VALUE' as the motor position
-
     As examples you could have:
         ch1.TangoAttribute = 'my/tango/device/attribute1'
         ch1.FormulaRead = '-1 * VALUE'
@@ -39,7 +70,6 @@ class TangoAttrMotorController(MotorController):
         ch2.TangoAttribute = 'my/tango/device/attribute2'
         ch2.FormulaRead = 'math.sqrt(VALUE)'
         ch2.FormulaWrite = 'math.pow(VALUE,2)'
-
     Each motor could use the following optional extra attributes:
     +) TangoAttributeEncoder - Used in case you want to use another attribute
         (different than the TangoAttribute) when the motor's position is to be
@@ -63,6 +93,24 @@ class TangoAttrMotorController(MotorController):
             Type: str,
             Description: 'The first Tango Attribute to read'\
                 ' (e.g. my/tango/dev/attr)',
+            Access: DataAccess.ReadWrite
+        },
+        TANGO_IS_MOVING: {
+            Type: str,
+            Description: 'The Tango Attribute indicating a movement'\
+                ' (e.g. my/tango/dev/is_moving)',
+            Access: DataAccess.ReadWrite
+        },
+        TANGO_LIMIT_PLUS: {
+            Type: str,
+            Description: 'The Tango Attribute indicating positive limit'\
+                ' (e.g. my/tango/dev/limit_plus)',
+            Access: DataAccess.ReadWrite
+        },
+        TANGO_LIMIT_MINUS: {
+            Type: str,
+            Description: 'The Tango Attribute indicating negative limit'\
+                ' (e.g. my/tango/dev/limit_minus)',
             Access: DataAccess.ReadWrite
         },
         FORMULA_READ: {
@@ -103,6 +151,9 @@ class TangoAttrMotorController(MotorController):
     def AddDevice(self, axis):
         self.axisAttributes[axis] = {}
         self.axisAttributes[axis][TAU_ATTR] = None
+        self.axisAttributes[axis][TAU_IS_MOVING] = None
+        self.axisAttributes[axis][TAU_LIMIT_PLUS] = None
+        self.axisAttributes[axis][TAU_LIMIT_MINUS] = None
         self.axisAttributes[axis][FORMULA_READ] = 'VALUE'
         self.axisAttributes[axis][FORMULA_WRITE] = 'VALUE'
         self.axisAttributes[axis][TAU_ATTR_ENC] = None
@@ -120,14 +171,19 @@ class TangoAttrMotorController(MotorController):
             status = 'ok'
             switch_state = 0
             tau_attr = self.axisAttributes[axis][TAU_ATTR]
+            tau_is_moving = self.axisAttributes[axis][TAU_IS_MOVING]
+            tau_limit_plus = self.axisAttributes[axis][TAU_LIMIT_PLUS]
+            tau_limit_minus = self.axisAttributes[axis][TAU_LIMIT_MINUS]
             if tau_attr is None:
                 return (State.Alarm, "attribute proxy is None", 0)
 
             if tau_attr.read().quality == AttrQuality.ATTR_CHANGING:
                 state = State.Moving
-
+            elif tau_is_moving:
+                if tau_is_moving.read().value:
+                    state = State.Moving
             elif self.axisAttributes[axis][MOVE_TIMEOUT] != None:
-                tau_attr_enc = self.axisAttributes[axis][TAU_ATTR_ENC]
+                #tau_attr_enc = self.axisAttributes[axis][TAU_ATTR_ENC]
                 enc_threshold = self.axisAttributes[
                     axis][TANGO_ATTR_ENC_THRESHOLD]
                 move_to = self.axisAttributes[axis][MOVE_TO]
@@ -149,8 +205,19 @@ class TangoAttrMotorController(MotorController):
                                                move_to - enc_threshold,
                                                move_to + enc_threshold))
 
-            # SHOULD DEAL ALSO ABOUT LIMITS
-            switch_state = 0
+            limit_plus = 0
+            limit_minus = 0
+            switch_state = MotorController.NoLimitSwitch
+            if tau_limit_plus:
+                limit_plus = tau_limit_plus.read().value
+            if tau_limit_minus:
+                limit_minus = tau_limit_minus.read().value
+                
+            if limit_plus:
+                switch_state |= MotorController.UpperLimitSwitch
+            elif limit_minus:
+                switch_state |= MotorController.LowerLimitSwitch
+                
             return (state, status, switch_state)
         except Exception, e:
             self._log.error(" (%d) error getting state: %s" % (axis, str(e)))
@@ -241,10 +308,17 @@ class TangoAttrMotorController(MotorController):
             self._log.debug(
                 "SetExtraAttributePar [%d] %s = %s" % (axis, name, value))
             self.axisAttributes[axis][name] = value
-            if name in [TANGO_ATTR, TANGO_ATTR_ENC]:
+            if name in [TANGO_ATTR, TANGO_ATTR_ENC, TANGO_IS_MOVING,
+                        TANGO_LIMIT_PLUS, TANGO_LIMIT_MINUS]:
                 key = TAU_ATTR
                 if name == TANGO_ATTR_ENC:
                     key = TAU_ATTR_ENC
+                elif name == TANGO_IS_MOVING:
+                    key = TAU_IS_MOVING
+                elif name == TANGO_LIMIT_PLUS:
+                    key = TAU_LIMIT_PLUS
+                elif name == TANGO_LIMIT_MINUS:
+                    key = TAU_LIMIT_MINUS
                 try:
                     self.axisAttributes[axis][key] = AttributeProxy(value)
                 except Exception, e:
@@ -262,3 +336,20 @@ class TangoAttrMotorController(MotorController):
 
     def SendToCtrl(self, in_data):
         return ""
+
+    © 2019 GitHub, Inc.
+    Terms
+    Privacy
+    Security
+    Status
+    Help
+
+    Contact GitHub
+    Pricing
+    API
+    Training
+    Blog
+    About
+
+Press h to open a hovercard with more details.
+
