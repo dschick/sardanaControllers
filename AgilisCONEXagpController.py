@@ -45,12 +45,16 @@ class AgilisCONEXagpController(MotorController):
     def __init__(self, inst, props, *args, **kwargs):
         super(AgilisCONEXagpController, self).__init__(
             inst, props, *args, **kwargs)
-
+        
+        print('AGP Controller Initialization ...'),
         # initialize hardware communication
         self.agilis = AGP(self.port)
         # first query will somehow timeout
-        self.agilis.getStatus()
-        print('AGP Controller Initialization ...'),
+        try:
+            self.agilis.getStatus()
+        except:
+            print('initial timeout'),            
+        
         if self.agilis.getStatus() == 0: # not referenced
             print('homing ...' % self.port),
             self.agilis.home()
