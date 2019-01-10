@@ -28,8 +28,8 @@ class pseudoCounterAltOnTest(PseudoCounterController):
         
     
     def Calc(self, axis, counters):
-        #if axis == 1:            
-        self.field = self.magnetTau.read().value
+        if axis == 1:            
+            self.field = self.magnetTau.read().value
         #self.field = self.magnet.getPosition()
         print(axis)
         print(self.field)
