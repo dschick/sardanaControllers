@@ -1,30 +1,3 @@
-
-Skip to content
-
-    Pull requests
-    Issues
-    Marketplace
-    Explore
-
-    @dschick
-
-1
-0
-
-    1
-
-dschick/sardanaControllers
-Code
-Issues 0
-Pull requests 0
-Projects 0
-Wiki
-Insights
-Settings
-sardanaControllers/TangoAttrMotorCtrl.py
-d06067d a day ago
-@dschick dschick add limits to Tango Motor Controller
-315 lines (272 sloc) 11.3 KB
 from PyTango import AttrQuality
 from PyTango import AttributeProxy
 from PyTango import DevFailed
@@ -57,12 +30,14 @@ MOVE_TIMEOUT = 'MoveTimeout'
 
 class TangoAttrMotorController(MotorController):
     """This controller offers as many motors as the user wants.
+
     Each motor has three _MUST_HAVE_ extra attributes:
     +) TangoAttribute - Tango attribute used to simulate the motor's position
         (moving the motor writes this attribute)
     +) FormulaRead - Formula evaluate using 'VALUE' as the Tango read attribute
         value
     +) FormulaWrite - Formula to evaluate using 'VALUE' as the motor position
+
     As examples you could have:
         ch1.TangoAttribute = 'my/tango/device/attribute1'
         ch1.FormulaRead = '-1 * VALUE'
@@ -70,6 +45,7 @@ class TangoAttrMotorController(MotorController):
         ch2.TangoAttribute = 'my/tango/device/attribute2'
         ch2.FormulaRead = 'math.sqrt(VALUE)'
         ch2.FormulaWrite = 'math.pow(VALUE,2)'
+
     Each motor could use the following optional extra attributes:
     +) TangoAttributeEncoder - Used in case you want to use another attribute
         (different than the TangoAttribute) when the motor's position is to be
@@ -215,8 +191,10 @@ class TangoAttrMotorController(MotorController):
                 
             if limit_plus:
                 switch_state |= MotorController.UpperLimitSwitch
+                state = State.Alarm
             elif limit_minus:
                 switch_state |= MotorController.LowerLimitSwitch
+                state = State.Alarm
                 
             return (state, status, switch_state)
         except Exception, e:
@@ -336,20 +314,3 @@ class TangoAttrMotorController(MotorController):
 
     def SendToCtrl(self, in_data):
         return ""
-
-    © 2019 GitHub, Inc.
-    Terms
-    Privacy
-    Security
-    Status
-    Help
-
-    Contact GitHub
-    Pricing
-    API
-    Training
-    Blog
-    About
-
-Press h to open a hovercard with more details.
-
