@@ -153,9 +153,10 @@ class SmaractMCSCtrl(MotorController):
             raise ValueError('Communication type is not valid')
         args = self.CommArgs.split(';')
         args[1] = int(args[1])
-        print("INITIALIZATION of SMARACT MCS")
+        print("INITIALIZATION of SMARACT MCS"),
         try:
             self._mcs = SmaractMCSController(comm_type, *args)
+            print("... SUCCESS for " + self.CommArgs)
         except Exception as e:
             self._log.error(e)
             print(e)
