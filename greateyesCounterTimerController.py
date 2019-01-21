@@ -149,3 +149,26 @@ class greateyesCounterTimerController(CounterTimerController):
     def StopOne(self, axis):
         """Stop the specified counter"""
         pass
+    
+    def AbortOne(self, axis):
+        """Abort the specified counter"""
+        pass
+    
+    def SendToCtrl(self, cmd):
+        """
+        Send custom native commands. The cmd is a space separated string
+        containing the command information. Parsing this string one gets
+        the command name and the following are the arguments for the given
+        command i.e.command_name, [arg1, arg2...]
+
+        :param cmd: string
+        :return: string (MANDATORY to avoid OMNI ORB exception)
+        """
+        mode = cmd.split(' ')[0].lower()
+        args = cmd.strip().split(' ')[1:]
+        
+        print(mode)
+        print(args)
+
+        if mode == "setpath":
+            self.ge.writeRead(b'SET_FILENAME {:}'.format(args[0]))
