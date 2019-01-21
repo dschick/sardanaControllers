@@ -113,6 +113,27 @@ class caenFastPSController(MotorController):
 
     def AbortOne(self, axis):
         pass
+    
+    def SendToCtrl(self, cmd):
+        """
+        Send custom native commands. The cmd is a space separated string
+        containing the command information. Parsing this string one gets
+        the command name and the following are the arguments for the given
+        command i.e.command_name, [arg1, arg2...]
+        :param cmd: string
+        :return: string (MANDATORY to avoid OMNI ORB exception)
+        """
+        # Get the process to send
+        mode = cmd.split(' ')[0].lower()
+        #args = cmd.strip().split(' ')[1:]
+
+        if mode == 'moff':
+            self.__sendAndReceive('MOFF')
+        elif mode == 'mon':
+            self.__sendAndReceive('MON')
+        else:
+            self._log.warning('Invalid command')
+            return 'ERROR: Invalid command requested.'
 
     def __sendAndReceive(self, command):
         try:
