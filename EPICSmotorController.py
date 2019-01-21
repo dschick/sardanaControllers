@@ -73,24 +73,27 @@ class EPICSmotorController(MotorController):
         pos = self.ReadOne(axis)
         now = time.time()
         
-        if self._isMoving == False:
-            state = State.On
-        elif self._isMoving & (abs(pos-self._target) > self._threshold): 
-            # moving and not in threshold window
-            if (now-self._moveStartTime) < self._timeout:
-                # before timeout
-                state = State.Moving
-            else:
-                # after timeout
-                self._log.warning('EPICS Motor Timeout')
+        try:
+            if self._isMoving == False:
+                state = State.On
+            elif self._isMoving & (abs(pos-self._target) > self._threshold): 
+                # moving and not in threshold window
+                if (now-self._moveStartTime) < self._timeout:
+                    # before timeout
+                    state = State.Moving
+                else:
+                    # after timeout
+                    self._log.warning('EPICS Motor Timeout')
+                    self._isMoving = False
+                    state = State.On
+            elif self._isMoving & (abs(pos-self._target) <= self._threshold): 
+                # moving and within threshold window
                 self._isMoving = False
                 state = State.On
-        elif self._isMoving & (abs(pos-self._target) <= self._threshold): 
-            # moving and within threshold window
-            self._isMoving = False
-            state = State.On
-            #print('Kepco Tagret: %f Kepco Current Pos: %f' % (self._target, pos))
-        else:
+                #print('Kepco Tagret: %f Kepco Current Pos: %f' % (self._target, pos))
+            else:
+                state = State.Fault
+        except:
             state = State.Fault
         
         return state, 'EPICS Motor', limit_switches  

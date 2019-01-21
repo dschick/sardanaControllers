@@ -73,31 +73,34 @@ class kepcoController(MotorController):
         pos = self.ReadOne(axis)
         now = time.time()
         
-        if self._isMoving == False:
-            state = State.On
-        elif self._isMoving & (abs(pos-self._target) > self._threshold): 
-            # moving and not in threshold window
-            if (now-self._moveStartTime) < self._timeout:
-                # before timeout
-                state = State.Moving
-            else:
-                # after timeout
-                self._log.warning('Kepco Timeout')
+        try:
+            if self._isMoving == False:
+                state = State.On
+            elif self._isMoving & (abs(pos-self._target) > self._threshold): 
+                # moving and not in threshold window
+                if (now-self._moveStartTime) < self._timeout:
+                    # before timeout
+                    state = State.Moving
+                else:
+                    # after timeout
+                    self._log.warning('Kepco Timeout')
+                    self._isMoving = False
+                    state = State.On
+            elif self._isMoving & (abs(pos-self._target) <= self._threshold): 
+                # moving and within threshold window
                 self._isMoving = False
                 state = State.On
-        elif self._isMoving & (abs(pos-self._target) <= self._threshold): 
-            # moving and within threshold window
-            self._isMoving = False
-            state = State.On
-            #print('Kepco Tagret: %f Kepco Current Pos: %f' % (self._target, pos))
-        else:
+                #print('Kepco Tagret: %f Kepco Current Pos: %f' % (self._target, pos))
+            else:
+                state = State.Fault
+        except:
             state = State.Fault
         
         return state, 'some text', limit_switches
 
     def ReadOne(self, axis):
         res = float(self.inst.query('MEAS:CURR?'))
-        time.sleep(0.001)
+        time.sleep(0.001)      
         return res
 
     def StartOne(self, axis, position):

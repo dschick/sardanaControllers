@@ -21,7 +21,7 @@
 ##
 ##############################################################################
 
-import visa, time
+import visa
 
 from sardana import State
 from sardana.pool.controller import ZeroDController
@@ -32,7 +32,7 @@ class keithley6430ZeroDController(ZeroDController):
     
     ctrl_properties = {'resource': {Type: str, Description: 'GPIB resource', DefaultValue: 'GPIB0::3::INSTR'}}
     
-    MaxDevice = 1    
+    MaxDevice = 2
 
     def __init__(self, inst, props, *args, **kwargs):
         ZeroDController.__init__(self, inst, props, *args, **kwargs)
@@ -47,12 +47,14 @@ class keithley6430ZeroDController(ZeroDController):
             print 'NOT initialized!'
 
         # settings
-        #self.inst.write('*RST')
+        self.inst.write('*RST')
         self.inst.write('REN')
         self.inst.write(':INIT')
-        #self.inst.write(':SENS:FUNC "CURR"')
-        #self.inst.write(':CURR:RANGE:AUTO ON')
+        self.inst.write(':SENS:FUNC "CURR"')
+        self.inst.write(':CURR:RANGE:AUTO ON')
         self.inst.write(':OUTP ON')
+        
+        self.data = []
 
     def AddDevice(self, ind):
         pass
@@ -63,7 +65,9 @@ class keithley6430ZeroDController(ZeroDController):
     def StateOne(self, ind):
         return State.On, "OK"
 
-    def ReadOne(self, ind):
-        res = self.inst.query(':READ?')   
-        #print(res)
-        return float(res.encode('utf8').split(',')[1])
+    def ReadOne(self, ind):        
+        if ind == 0:
+            res = self.inst.query(':READ?')
+            self.data = res.encode('utf8').split(',')
+        
+        return -1.0*float(self.data[ind])
