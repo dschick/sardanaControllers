@@ -111,9 +111,10 @@ class boxcars:
         mean1 = np.mean(boxcar1_value[select1], dtype=np.float64)
         mean2 = np.mean(boxcar2_value[select2], dtype=np.float64)
         rel   = mean1/mean2
+        diff  = abs(mean1-mean2)
         
         return (mean1, mean2,
-                    sem(boxcar1_value[select1]),sem(boxcar2_value[select2]), len(boxcar1_value[select1]), freq, duration, rel)     
+                    sem(boxcar1_value[select1]),sem(boxcar2_value[select2]), len(boxcar1_value[select1]), freq, duration, rel, diff)     
 
     def close(self):
         # Unsubscribe from all paths
