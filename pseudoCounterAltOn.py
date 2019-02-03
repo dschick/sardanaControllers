@@ -1,7 +1,8 @@
 from sardana.pool.controller import PseudoCounterController
-from sardana.taurus.core.tango.sardana.pool import registerExtensions
-registerExtensions()
-import taurus
+#from sardana.taurus.core.tango.sardana.pool import registerExtensions
+#registerExtensions()
+#import taurus
+from PyTango import DeviceProxy
 
 class pseudoCounterAltOn(PseudoCounterController):
     """ A  pseudo counter which remebers the input for negative magnetic
@@ -14,11 +15,11 @@ class pseudoCounterAltOn(PseudoCounterController):
     
     def __init__(self, inst, props):  
         PseudoCounterController.__init__(self, inst, props)
-        self.magnet = taurus.Device("kepco")
+        self.magnetState = DeviceProxy("hhg/MagnetState/xmcd")
     
     def Calc(self, axis, counters):
         counter = counters[0]
-        self.field = self.magnet.getPosition()
+        self.field = self.magnetState.magnet
         
         if self.field < 0:
             self.value = counter        
