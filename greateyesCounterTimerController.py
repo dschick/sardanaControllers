@@ -27,6 +27,7 @@ import socket
 import struct
 import json
 import numpy as np
+import time
 
 class greatEyes:
     def __init__(self, ip, port):
@@ -105,6 +106,8 @@ class greateyesCounterTimerController(CounterTimerController):
         self.data = []
         self.isAquiring = False
         self._axes = {}
+        self.timeout = 5
+        self.start_time = 0
         
     def ReadOne(self, axis):
         """Get the specified counter value"""
@@ -112,13 +115,24 @@ class greateyesCounterTimerController(CounterTimerController):
         if axis == 0:
             peaks = json.loads(self.ge.writeRead(b'GET_PEAKS'))
             self.data = np.array(peaks, dtype=float).flatten()
-            rel = self.data[0:10]/self.data[10:20]
-            self.data = np.append(self.data, rel)
+            
+            for spec, ref in zip(self.data[0:10], self.data[10:20]):
+                if ref == 0:
+                    self.data = np.append(self.data, 0)
+                else:
+                    self.data = np.append(self.data, spec/ref)
+                    
+            timestamps = json.loads(self.ge.writeRead(b'GET_TIMESTAMPS'))
+            spec_filename = timestamps[0]
+            fileID = np.uint64(spec_filename[5:11] + spec_filename[12:18] + spec_filename[19:22])
+            self.data = np.append(self.data, fileID)
          
         return self.data[axis]
 
     def StateOne(self, axis):
         """Get the specified counter state"""
+        if (time.time() - self.start_time) > self.timeout:
+            return State.Fault, "Counter in timeout"
         
         if axis == 0:
             res = self.ge.writeRead(b'GET_STATUS')
@@ -141,6 +155,7 @@ class greateyesCounterTimerController(CounterTimerController):
     def StartAll(self):
         self.isAquiring = True
         self.ge.writeRead(b'ACQUIRE')
+        self.start_time = time.time()
         #time.sleep(0.1)
     
     def LoadOne(self, axis, value, repetitions):
@@ -166,9 +181,10 @@ class greateyesCounterTimerController(CounterTimerController):
         """
         mode = cmd.split(' ')[0].lower()
         args = cmd.strip().split(' ')[1:]
-        
-        print(mode)
-        print(args)
 
         if mode == "setpath":
-            self.ge.writeRead(b'SET_FILENAME {:}'.format(args[0]))
+            self.ge.writeRead(b'SET_FILENAME {:}'.format(args[0]))            
+        elif mode == "set_exposure":
+            self.ge.writeRead(b'SET_EXPOSURETIME {:} {:}'.format(args[0], int(float(args[1])*1000)))
+        elif mode == "dark":
+            self.ge.writeRead(b'DARK {:}'.format(args[0]))
