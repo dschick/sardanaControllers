@@ -61,8 +61,9 @@ class kepcoController(MotorController):
         self._motors[axis] = True
         self.inst.write('FUNC:MODE CURR')
         self.inst.write('CURR:MODE FIX')
-        self.inst.write('CURR:LIM:NEG 1.5')
-        self.inst.write('CURR:LIM:POS 1.5')
+        self.inst.write('VOLT 30')
+        self.inst.write('CURR:LIM:NEG 2.5')
+        self.inst.write('CURR:LIM:POS 2.5')
         self.inst.write('OUTP ON')
 
     def DeleteDevice(self, axis):
@@ -118,3 +119,4 @@ class kepcoController(MotorController):
         pass
 
     
+
