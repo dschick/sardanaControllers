@@ -36,7 +36,7 @@ class greatEyes:
         self.s.connect((ip, port))
         
     def writeRead(self, cmd):
-        self.write(cmd)        
+        self.write(cmd)
         return(self.read())
     
     def acquireImage(self, intTime):
@@ -139,6 +139,11 @@ class greateyesCounterTimerController(CounterTimerController):
             status = int(res.decode("utf-8").split(' ')[1])
             if (status == -1) or (status == 1):
                 self.isAquiring = False
+            elif status == -2:
+                #print("ERROR: Camera in running mode!")
+                self.error("ERROR: Camera in running mode!")
+                self.warning("ERROR: Camera in running mode!")
+                return State.Fault, "Camera in running mode!"
             else:
                 self.isAquiring = True
             
@@ -154,7 +159,7 @@ class greateyesCounterTimerController(CounterTimerController):
     
     def StartAll(self):
         self.isAquiring = True
-        self.ge.writeRead(b'ACQUIRE')
+        self.ge.write(b'ACQUIRE')
         self.start_time = time.time()
         #time.sleep(0.1)
     
@@ -183,8 +188,8 @@ class greateyesCounterTimerController(CounterTimerController):
         args = cmd.strip().split(' ')[1:]
 
         if mode == "setpath":
-            self.ge.writeRead(b'SET_FILENAME {:}'.format(args[0]))            
+            self.ge.write(b'SET_FILENAME {:}'.format(args[0]))
         elif mode == "set_exposure":
-            self.ge.writeRead(b'SET_EXPOSURETIME {:} {:}'.format(args[0], int(float(args[1])*1000)))
+            self.ge.write(b'SET_EXPOSURETIME {:} {:}'.format(args[0], int(float(args[1])*1000)))
         elif mode == "dark":
-            self.ge.writeRead(b'DARK {:}'.format(args[0]))
+            self.ge.write(b'DARK {:}'.format(args[0]))
