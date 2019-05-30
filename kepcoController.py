@@ -53,7 +53,7 @@ class kepcoController(MotorController):
         self._motors = {}
         self._isMoving = None
         self._moveStartTime = None
-        self._threshold = 0.05
+        self._threshold = 0.1
         self._target = None
         self._timeout = 10
 
@@ -61,8 +61,8 @@ class kepcoController(MotorController):
         self._motors[axis] = True
         self.inst.write('FUNC:MODE CURR')
         self.inst.write('CURR:MODE FIX')
-        self.inst.write('CURR:LIM:NEG 1.5')
-        self.inst.write('CURR:LIM:POS 1.5')
+        self.inst.write('CURR:LIM:NEG 5')
+        self.inst.write('CURR:LIM:POS 5')
         self.inst.write('OUTP ON')
 
     def DeleteDevice(self, axis):

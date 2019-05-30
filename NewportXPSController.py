@@ -51,9 +51,9 @@ class NewportXPSController(MotorController):
 
         # initialize hardware communication
         self.XPS = XPS()
-        self.socketIDmove  = self.XPS.TCP_ConnectToServer(self.IP, self.port, self.timeOut)
-        self.socketIDstate = self.XPS.TCP_ConnectToServer(self.IP, self.port, self.timeOut)
-        self.socketIDread  = self.XPS.TCP_ConnectToServer(self.IP, self.port, self.timeOut)
+        self.socketIDmove  = self.XPS.TCP_ConnectToServer(self.IP, self.port, self.timeOut, 0)
+        self.socketIDstate = self.XPS.TCP_ConnectToServer(self.IP, self.port, self.timeOut, 1)
+        self.socketIDread  = self.XPS.TCP_ConnectToServer(self.IP, self.port, self.timeOut, 1)
         self.socketIDabort = self.XPS.TCP_ConnectToServer(self.IP, self.port, self.timeOut, 1)
         self.socketSGamma  = self.XPS.TCP_ConnectToServer(self.IP, self.port, self.timeOut, 1)
         
@@ -96,7 +96,7 @@ class NewportXPSController(MotorController):
             MOVING = False
                                         
         [_, state] = self.XPS.GroupStatusGet(self.socketIDstate, group)
-        time.sleep(0.01)        
+        time.sleep(0.05)        
                 
         if ((state >= 43) & (state <= 44)) or MOVING:
             return self.StateMap[2], 'stage is moving', limit_switches
@@ -117,6 +117,7 @@ class NewportXPSController(MotorController):
             raise ValueError('Group or positioner not set for this axis')
             
         [_, pos] = self.XPS.GroupPositionCurrentGet(self.socketIDread, group, 1)
+        #print('XPS Pos: {:}'.format(pos))
         time.sleep(0.05)
         
         return pos

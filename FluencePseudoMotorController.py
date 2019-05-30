@@ -25,13 +25,13 @@ class fluencePseudoMotorController(PseudoMotorController):
     def CalcPhysical(self, axis, pseudo_pos, curr_physical_pos):
         fluence = pseudo_pos[axis-1]
         trans   = 1-(self.refl/100)
-        power = (fluence*self.repRate/1000*np.pi*self.pumpHor/10000/2*self.pumpVer/10000/2)/trans
+        power = float((fluence*self.repRate/1000*np.pi*self.pumpHor/10000/2*self.pumpVer/10000/2)/trans)
         return power
     
     def CalcPseudo(self, axis, physical_pos, curr_pseudo_pos):
         power = physical_pos[axis-1]        
         trans   = 1-(self.refl/100)
-        fluence = power*trans/(self.repRate/1000*np.pi*self.pumpHor/10000/2*self.pumpVer/10000/2)
+        fluence = float(power*trans/(self.repRate/1000*np.pi*self.pumpHor/10000/2*self.pumpVer/10000/2))
         return fluence
     
     def GetAxisExtraPar(self, axis, name):

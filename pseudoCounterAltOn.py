@@ -16,9 +16,12 @@ class pseudoCounterAltOn(PseudoCounterController):
     
     def Calc(self, axis, counters):
         counter = counters[0]
-        self.field = self.magnetState.magnet
-        
-        if self.field < 0:
-            self.value = counter        
+        try:
+            self.field = self.magnetState.magnet
+            
+            if self.field < 0:
+                self.value = counter
+        except:
+            pass
     
         return self.value

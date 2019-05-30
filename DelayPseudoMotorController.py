@@ -16,11 +16,14 @@ class DelayPseudoMotorController(PseudoMotorController):
     
     def __init__(self, inst, props):  
         PseudoMotorController.__init__(self, inst, props)
+        self.c_in_mm_ps = scipy.constants.c*1000*1e-12
     
     def CalcPhysical(self, axis, pseudo_pos, curr_physical_pos):
-        c_in_mm_ps = scipy.constants.c*1000*1e-12
-        return pseudo_pos[axis-1]*c_in_mm_ps/2
+        ret = float(pseudo_pos[axis-1])*self.c_in_mm_ps/2
+        #print('calcPhysical: {:}'.format(ret))
+        return ret
     
     def CalcPseudo(self, axis, physical_pos, curr_pseudo_pos):
-        c_in_mm_ps = scipy.constants.c*1000*1e-12
-        return physical_pos[axis-1]/c_in_mm_ps*2
+        ret = float(physical_pos[axis-1])/self.c_in_mm_ps*2
+        #print('calcPseudo: {:}'.format(ret))
+        return ret
