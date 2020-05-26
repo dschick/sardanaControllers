@@ -141,22 +141,22 @@ class greateyesCounterTimerController(CounterTimerController):
         if (axis == 0) and (self.isAquiring == False):
             self.data = []
             peaks = json.loads(self.ge.writeRead(b'GET_PEAKS'))
-            print(peaks)
+            #print(peaks)
             self.data = np.array(peaks, dtype=float).flatten()
-            print(self.data)
+            #print(self.data)
             for spec, ref in zip(self.data[0:10], self.data[10:20]):
                 if ref == 0: # avoid division by 0
                     self.data = np.append(self.data, 0)
                 else:
                     self.data = np.append(self.data, spec/ref)
                     
-            timestamps = json.loads(self.ge.writeRead(b'GET_TIMESTAMPS'))
-            URIs = json.loads(self.ge.writeRead(b'GET_URI'))
-            print(URIs)
-            print(timestamps)
+            #timestamps = json.loads(self.ge.writeRead(b'GET_TIMESTAMPS'))
+            #URIs = json.loads(self.ge.writeRead(b'GET_URI'))
+            #print(URIs)
+            #print(timestamps)
 #            spec_filename = timestamps[0]
             fileID = -999#np.uint64(spec_filename[5:11] + spec_filename[12:18] + spec_filename[19:22])
-            print(fileID)
+            #print(fileID)
             self.data = np.append(self.data, fileID)
          
         return self.data[axis]
@@ -203,10 +203,10 @@ class greateyesCounterTimerController(CounterTimerController):
             
         filePath = filePath.replace('/', '\\')
         if filePath:
-            print(filePath)
+            #print(filePath)
             res = self.ge.writeRead(b'ACQUIRE ' + filePath)
         else:
-            print('No filePath given')
+            #print('No filePath given')
             res = self.ge.writeRead(b'ACQUIRE')
         self.start_time = time.time()
         #time.sleep(0.1)

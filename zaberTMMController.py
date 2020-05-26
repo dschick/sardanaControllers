@@ -89,14 +89,15 @@ class ZaberTMMController(MotorController):
 
     def ReadOne(self, axis):
         command_number = 60 # return current position
-        command = BinaryCommand(axis, command_number)
-        self.con.write(command)
-        reply = self.con.read()
+        command = BinaryCommand(axis, command_number)        
         
-        while (reply.command_number != command_number) & (reply.device_number != axis):
+        for i in range(50):
             self.con.write(command)
             reply = self.con.read()
-            time.sleep(0.05)
+            if (reply.command_number != command_number) & (reply.device_number != axis):
+                time.sleep(0.05)
+            else:
+                break
         
         return int(reply.data)
         

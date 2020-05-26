@@ -68,6 +68,7 @@ class keithley6430ZeroDController(ZeroDController):
     def ReadOne(self, ind):        
         if ind == 0:
             res = self.inst.query(':READ?')
+            print(res)
             self.data = res.encode('utf8').split(',')
         
         return -1.0*float(self.data[ind])
