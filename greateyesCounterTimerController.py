@@ -130,7 +130,7 @@ class greateyesCounterTimerController(CounterTimerController):
         self.data = []
         self.isAquiring = False
         self._axes = {}
-        self.timeout = 5
+        self.timeout = 15
         self.start_time = 0
         self.pointNb = 0
         self.fileName = ''
